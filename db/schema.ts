@@ -1,0 +1,13 @@
+import { sqliteTable, text, integer, index, primaryKey } from 'drizzle-orm/sqlite-core';
+export const users = sqliteTable('users', { id: text('id').primaryKey(), version: integer('version').notNull(), operation: text('operation').notNull(), settings: text('settings').notNull() });
+const entity = (name: string) => sqliteTable(name, { id: text('id').notNull(), userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }), parentId: text('parent_id'), position: integer('position').notNull().default(0), data: text('data').notNull() }, t => [primaryKey({ columns: [t.userId, t.id] }), index('idx_' + name + '_parent').on(t.userId, t.parentId)]);
+export const exercises = entity('exercises');
+export const routines = entity('routines');
+export const workoutDays = entity('workout_days');
+export const routineExercises = entity('routine_exercises');
+export const workoutSessions = entity('workout_sessions');
+export const exerciseSessions = entity('exercise_sessions');
+export const sets = entity('sets');
+export const bodyMeasurements = entity('body_measurements');
+export const personalRecords = entity('personal_records');
+export const exerciseProgressions = entity('exercise_progressions');
