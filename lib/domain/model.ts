@@ -107,7 +107,15 @@ export type AppState = {
     measurements: BodyMeasurement[];
     settings: Settings;
 };
-export const uid = () => crypto.randomUUID();
+export const uid = (): string => {
+    if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+    // getRandomValues also works in the HTTP preview; keep UUID v4 entropy.
+    const bytes = crypto.getRandomValues(new Uint8Array(16));
+    bytes[6] = (bytes[6] & 15) | 64;
+    bytes[8] = (bytes[8] & 63) | 128;
+    const hex = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+};
 export const defaults: Settings = { unit: 'kg', increment: 2.5, timer: true, theme: 'dark', weekStart: 'monday', showRir: true, dateFormat: 'es', weeklyGoal: 3 };
 export const library: Exercise[] = [['Sentadilla', 'Pierna', 'Barra'], ['Press banca', 'Pecho', 'Barra'], ['Peso muerto', 'Pierna', 'Barra'], ['Press militar', 'Hombro', 'Barra'], ['Remo barra', 'Espalda', 'Barra'], ['Dominadas', 'Espalda', 'Peso corporal'], ['Fondos', 'Pecho', 'Peso corporal'], ['Flexiones', 'Pecho', 'Peso corporal'], ['Zancadas', 'Pierna', 'Mancuernas'], ['Peso muerto rumano', 'Pierna', 'Barra'], ['Hip thrust', 'Glúteo', 'Barra'], ['Face pull', 'Hombro', 'Polea / banda'], ['Curl bíceps', 'Bíceps', 'Mancuernas'], ['Extensión tríceps', 'Tríceps', 'Polea'], ['Elevaciones laterales', 'Hombro', 'Mancuernas'], ['Press inclinado', 'Pecho', 'Barra'], ['Remo mancuerna', 'Espalda', 'Mancuerna'], ['Prensa', 'Pierna', 'Máquina'], ['Curl femoral', 'Pierna', 'Máquina'], ['Extensión cuádriceps', 'Pierna', 'Máquina'], ['Core', 'Core', 'Peso corporal']].map(([name, group, equipment], i) => ({ id: 'ex-' + i, name, group, equipment, notes: '', type: equipment === 'Peso corporal' ? 'bodyweight' : 'loaded' }));
 export function config(e: Exercise, increment?: number): RoutineExercise { return { id: uid(), exerciseId: e.id, name: e.name, group: e.group, type: e.type, targetSets: 3, min: 5, max: 8, rirMin: 2, rirMax: 3, increment: increment ?? (e.group === 'Pierna' ? 2.5 : 1.25), rest: 120, notes: '' }; }

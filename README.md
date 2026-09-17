@@ -92,3 +92,13 @@ Prueba completa de series y datos antiguos:
 ```sh
 node tests/series.mjs
 ```
+
+## Demostración pública
+
+`/demo` abre siempre un espacio ficticio sin login, incluso si el visitante tiene sesión. `/` muestra la demo a visitantes anónimos y la cuenta privada a usuarios autenticados. No se han modificado los controles de identidad de `/api/state` ni `/api/action`.
+
+La demo comparte interfaz, validación, reducer, progresión e historial con la aplicación normal. Solo sustituye la persistencia por almacenamiento local con la clave `fuerza-base:demo:v1`. No envía lecturas ni escrituras a la base de datos de usuarios. Incluye cuatro sesiones y medidas sintéticas; «Restablecer demo» repone esos ejemplos tras confirmación. No prueba la autenticación ni la persistencia de servidor.
+
+Para recorrer botones y formularios desde ChatGPT hace falta una modalidad con navegador interactivo. La búsqueda web textual no ejecuta ese flujo. El acceso a la URL publicada también depende de las restricciones de red del navegador de ChatGPT.
+
+Pruebas: `node tests/demo.mjs`, `node tests/series.mjs`, TypeScript y compilación. Recorrido de navegador verificado en la previsualización: acceso anónimo, inicio, registro de una programada y una adicional, recarga, recuperación, finalización parcial e historial.
