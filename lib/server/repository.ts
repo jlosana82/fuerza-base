@@ -1,5 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { initialState, type AppState } from '../domain/model';
+import { normalizeState } from '../domain/sets';
 import { records, recommend } from '../domain/progression';
 export class Conflict extends Error {
 }
@@ -11,6 +12,8 @@ type Row = {
     data: string;
 };
 type Flat = Record<string, Row[]>;
+// Actual stored rows, before read-time compatibility upgrade.
+const loadedRows = new WeakMap<AppState, Flat>();
 const db = () => { const DB = (env as unknown as {
     DB: D1Database;
 }).DB; if (!DB)
@@ -49,7 +52,9 @@ export async function load(user: string): Promise<AppState> {
     const account = results[0].results[0] as any;
     const f: Flat = Object.fromEntries(tables.map((t, i) => [t, results[i + 1].results as unknown as Row[]]));
     const parse = (t: string, parent?: string) => f[t].filter(r => parent === undefined || r.parent_id === parent).map(r => JSON.parse(r.data));
-    return { version: account.version, settings: JSON.parse(account.settings), exercises: parse('exercises'), routines: parse('routines').map(r => ({ ...r, days: parse('workout_days', r.id).map(d => ({ ...d, exercises: parse('routine_exercises', d.id) })) })), sessions: parse('workout_sessions').map(s => ({ ...s, exercises: parse('exercise_sessions', s.id).map(e => ({ ...e, sets: parse('sets', e.id) })) })), measurements: parse('body_measurements') };
+    const state = normalizeState({ version: account.version, settings: JSON.parse(account.settings), exercises: parse('exercises'), routines: parse('routines').map(r => ({ ...r, days: parse('workout_days', r.id).map(d => ({ ...d, exercises: parse('routine_exercises', d.id) })) })), sessions: parse('workout_sessions').map(s => ({ ...s, exercises: parse('exercise_sessions', s.id).map(e => ({ ...e, sets: parse('sets', e.id) })) })), measurements: parse('body_measurements') });
+    loadedRows.set(state, f);
+    return state;
 }
-export async function save(user: string, before: AppState, after: AppState) { const database = db(), op = crypto.randomUUID(); const result = await database.batch([database.prepare('UPDATE users SET version=?, operation=?, settings=? WHERE id=? AND version=?').bind(after.version, op, JSON.stringify(after.settings), user, before.version), ...writes(database, user, op, flatten(before), flatten(after))]); if (result[0].meta.changes !== 1)
+export async function save(user: string, before: AppState, after: AppState) { const database = db(), op = crypto.randomUUID(); const result = await database.batch([database.prepare('UPDATE users SET version=?, operation=?, settings=? WHERE id=? AND version=?').bind(after.version, op, JSON.stringify(after.settings), user, before.version), ...writes(database, user, op, loadedRows.get(before) ?? flatten(before), flatten(after))]); if (result[0].meta.changes !== 1)
     throw new Conflict('Hay cambios desde otro dispositivo. Recarga antes de guardar.'); }

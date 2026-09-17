@@ -12,7 +12,7 @@ export type RoutineExercise = {
     name: string;
     group: string;
     type: 'loaded' | 'bodyweight';
-    sets: number;
+    targetSets: number;
     min: number;
     max: number;
     rirMin: number;
@@ -35,16 +35,21 @@ export type Routine = {
     nextDay: number;
     days: WorkoutDay[];
 };
+export type SetType = 'programmed' | 'additional' | 'warmup';
+export type SetStatus = 'pending' | 'completed' | 'removed';
 export type SetRecord = {
     id: string;
+    type: SetType;
+    status: SetStatus;
     weight: number;
     reps: number;
     rir: number;
-    savedAt: string;
+    savedAt: string | null;
 };
 export type ExerciseSession = {
     id: string;
     config: RoutineExercise;
+    setsVersion: 2;
     sets: SetRecord[];
 };
 export type WorkoutSession = {
@@ -105,5 +110,5 @@ export type AppState = {
 export const uid = () => crypto.randomUUID();
 export const defaults: Settings = { unit: 'kg', increment: 2.5, timer: true, theme: 'dark', weekStart: 'monday', showRir: true, dateFormat: 'es', weeklyGoal: 3 };
 export const library: Exercise[] = [['Sentadilla', 'Pierna', 'Barra'], ['Press banca', 'Pecho', 'Barra'], ['Peso muerto', 'Pierna', 'Barra'], ['Press militar', 'Hombro', 'Barra'], ['Remo barra', 'Espalda', 'Barra'], ['Dominadas', 'Espalda', 'Peso corporal'], ['Fondos', 'Pecho', 'Peso corporal'], ['Flexiones', 'Pecho', 'Peso corporal'], ['Zancadas', 'Pierna', 'Mancuernas'], ['Peso muerto rumano', 'Pierna', 'Barra'], ['Hip thrust', 'Glúteo', 'Barra'], ['Face pull', 'Hombro', 'Polea / banda'], ['Curl bíceps', 'Bíceps', 'Mancuernas'], ['Extensión tríceps', 'Tríceps', 'Polea'], ['Elevaciones laterales', 'Hombro', 'Mancuernas'], ['Press inclinado', 'Pecho', 'Barra'], ['Remo mancuerna', 'Espalda', 'Mancuerna'], ['Prensa', 'Pierna', 'Máquina'], ['Curl femoral', 'Pierna', 'Máquina'], ['Extensión cuádriceps', 'Pierna', 'Máquina'], ['Core', 'Core', 'Peso corporal']].map(([name, group, equipment], i) => ({ id: 'ex-' + i, name, group, equipment, notes: '', type: equipment === 'Peso corporal' ? 'bodyweight' : 'loaded' }));
-export function config(e: Exercise, increment?: number): RoutineExercise { return { id: uid(), exerciseId: e.id, name: e.name, group: e.group, type: e.type, sets: 3, min: 5, max: 8, rirMin: 2, rirMax: 3, increment: increment ?? (e.group === 'Pierna' ? 2.5 : 1.25), rest: 120, notes: '' }; }
+export function config(e: Exercise, increment?: number): RoutineExercise { return { id: uid(), exerciseId: e.id, name: e.name, group: e.group, type: e.type, targetSets: 3, min: 5, max: 8, rirMin: 2, rirMax: 3, increment: increment ?? (e.group === 'Pierna' ? 2.5 : 1.25), rest: 120, notes: '' }; }
 export function initialState(): AppState { return { version: 0, exercises: library, routines: [{ id: 'routine-base', name: 'Fuerza Base A/B', description: 'Básicos, doble progresión y margen para recuperar. Alterna los días A y B.', createdAt: new Date().toISOString(), status: 'active', nextDay: 0, days: [[0, 1, 4, 6, 20], [2, 3, 5, 8, 11]].map((ids, i) => ({ id: 'day-' + i, name: 'Día ' + (i ? 'B' : 'A'), exercises: ids.map(n => config(library[n])) })) }], sessions: [], measurements: [], settings: defaults }; }

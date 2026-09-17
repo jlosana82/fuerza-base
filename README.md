@@ -80,3 +80,15 @@ La duración mide tiempo transcurrido entre inicio y fin e incluye pausas fuera 
 6. Evolución: paginación, copias exportables, cola sin conexión y proveedor de identidad independiente.
 
 El usuario ha autorizado publicar el código en el repositorio público GitHub. Los datos de entrenamiento permanecen en la base de datos privada del Site.
+
+## Series programadas y adicionales
+
+El editor permite configurar `targetSets` por ejercicio con botones −/+ o entrada numérica (1–100). Durante el entrenamiento, «Añadir serie» crea una adicional independiente; se pueden eliminar pendientes y realizadas (estas últimas con confirmación). Las operaciones no modifican la rutina. El historial y métricas solo consideran series realizadas, con adicionales identificadas. Los calentamientos están previstos en el modelo, sin UI de creación todavía.
+
+El cumplimiento conserva el objetivo inicial de programadas; las extras aparecen aparte. Eliminar una programada no reduce artificialmente ese objetivo. Para subir la carga se exige completar las programadas del snapshot, sin que una extra al fallo lo impida. Ver decisiones y compatibilidad en `docs/architecture.md`.
+
+Prueba completa de series y datos antiguos:
+
+```sh
+node tests/series.mjs
+```
